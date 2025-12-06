@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Reverse Pomodoro</title>
+
+<style>
+    body {
+        background-color: #313447;
+        color: #CCD1EE;
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        user-select: none;
+    }
+
+    button {
+        background: #454866;
+        color: #CCD1EE;
+        border: none;
+        padding: 12px 24px;
+        font-size: 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    button:hover {
+        background: #5a5e82;
+    }
+
+    #timer-display {
+        font-size: 5rem;
+        margin-bottom: 10px;
+    }
+
+    #status {
+        font-size: 1.4rem;
+        margin-bottom: 20px;
+        opacity: 0.85;
+    }
+
+
+</style>
+
+</head>
+<body>
+
+    <div id="timer-display">00:00</div>
+    <div id="status">Clique no botão abaixo para ativar o áudio</div>
+    <button id="enable-sound">Ativar áudio</button>
+    <p style="opacity:.6;">Espaço = Iniciar / Parar</p>
+
+<script>
+
+    let soundEnabled = false
+
+    const endSound = new Audio("bell.mp3");
+    endSound.volume = 1.0;
+
+    document.getElementById("enable-sound").addEventListener("click", () => {
+        soundEnabled = true
+        document.getElementById("status").textContent = "Pressione espaço para começar"
+        document.getElementById("enable-sound").style.display = "none"
+    })
+
+    class Timer {
+        constructor() {
+            this.startTime = undefined
+            this.interval = null
+            this.mode = "idle"
+            this.restRemaining = 0
+            this.awaitingSoundStop = false
+        }
+
+        startWork() {
+            this.mode = "working"
+            this.startTime = Date.now()
+            this.interval = setInterval(() => this.updateDisplay(), 100)
+            document.getElementById("status").textContent = "Trabalhando..."
+        }
+
+        stopWorkAndStartRest() {
+            let worked_ms = Date.now() - this.startTime
+            let worked_min = worked_ms / 1000 / 60
+
+            this.restRemaining = worked_ms / 5
+            this.startTime = Date.now()
+            this.mode = "resting"
+            document.getElementById("status").textContent =
+                "Descansando... (" + Math.round(worked_min/5) + " min)"
+        }
+
+        stopRest(playSound = true) {
+            this.mode = "idle"
+            clearInterval(this.interval)
+            this.startTime = undefined
+
+            if (soundEnabled && playSound) {
+                this.awaitingSoundStop = true
+                endSound.currentTime = 0
+                endSound.play()
+            }
+
+            document.getElementById("timer-display").textContent = "00:00"
+            document.getElementById("status").textContent =
+                "Ciclo concluído ✔️ Pressione espaço para continuar"
+        }
+
+        updateDisplay() {
+            let elapsed = Date.now() - this.startTime
+
+            if (this.mode === "resting") {
+                let remaining = this.restRemaining - elapsed
+                if (remaining <= 0) {
+                    this.stopRest()
+                    return
+                }
+                this.displayTime(remaining)
+            } else {
+                this.displayTime(elapsed)
+            }
+        }
+
+        displayTime(ms) {
+            let seconds = Math.floor(ms / 1000)
+            let minutes = Math.floor(seconds / 60)
+            seconds = seconds % 60
+            document.getElementById("timer-display").textContent =
+                String(minutes).padStart(2,'0') + ":" +
+                String(seconds).padStart(2,'0')
+        }
+    }
+
+    let timer = new Timer()
+
+    addEventListener("keydown", function(event) {
+        if (event.code === 'Space') {
+            event.preventDefault()
+
+            if (!soundEnabled) return alert("Clique no botão para liberar o som!")
+
+            // NOVO: primeiro espaço após o descanso só para o som
+            if (timer.awaitingSoundStop) {
+                endSound.pause()
+                endSound.currentTime = 0
+                timer.awaitingSoundStop = false
+                document.getElementById("status").textContent =
+                    "Som parado ✔️ Pressione espaço para novo ciclo"
+                return
+            }
+
+            if (timer.mode === "idle") {
+                timer.startWork()
+                document.body.style.backgroundColor = "#313447";
+            }
+            else if (timer.mode === "working") {
+                timer.stopWorkAndStartRest()
+                document.body.style.backgroundColor = "#304678ff";
+            }
+            else if (timer.mode === "resting") {
+                timer.stopRest(false)
+            }
+        }
+    })
+
+</script>
+
+</body>
+</html>
+
