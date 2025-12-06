@@ -162,7 +162,6 @@
 
             if (!soundEnabled) return alert("Clique no botão para liberar o som!")
 
-            // NOVO: primeiro espaço após o descanso só para o som
             if (timer.awaitingSoundStop) {
                 endSound.pause()
                 endSound.currentTime = 0
