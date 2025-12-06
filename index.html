@@ -52,6 +52,7 @@
     <div id="status">Clique no botão abaixo para ativar o áudio</div>
     <button id="enable-sound">Ativar áudio</button>
     <p style="opacity:.6;">Espaço = Iniciar / Parar</p>
+    <p style="opacity:.6;">P = Pausa banheiro</p>
 
 <script>
 
@@ -124,6 +125,24 @@
             }
         }
 
+        pause() {
+            if (this.mode === "working") {
+                this.mode = "paused";
+                clearInterval(this.interval);
+                this.pauseOffset = Date.now() - this.startTime;
+                document.getElementById("status").textContent = "Pausado 🛑";
+            }
+        }
+
+        resume() {
+            if (this.mode === "paused") {
+                this.mode = "working";
+                this.startTime = Date.now() - this.pauseOffset;
+                this.interval = setInterval(() => this.updateDisplay(), 100);
+                document.getElementById("status").textContent = "Trabalhando...";
+            }
+        }
+
         displayTime(ms) {
             let seconds = Math.floor(ms / 1000)
             let minutes = Math.floor(seconds / 60)
@@ -137,6 +156,7 @@
     let timer = new Timer()
 
     addEventListener("keydown", function(event) {
+
         if (event.code === 'Space') {
             event.preventDefault()
 
@@ -164,6 +184,19 @@
                 timer.stopRest(false)
             }
         }
+
+        if (event.code === 'KeyP') {
+
+            if (timer.mode === "working") {
+                timer.pause()
+                this.mode = "paused";
+                document.body.style.backgroundColor = "#7a3e3e";
+            }  
+            else if (timer.mode === "paused") {
+                timer.resume()
+            }
+        }
+
     })
 
 </script>
